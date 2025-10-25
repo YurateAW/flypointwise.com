@@ -29,9 +29,10 @@
   <script>
     // ✅ Automatically switch between local and production backend
     const BACKEND_URL =
-      window.location.hostname === "localhost"
-        ? "http://localhost:3001/api/flight-agent"
-        : "https://flypointwise-agent-backend.up.railway.app/api/flight-agent";
+    window.location.hostname === "localhost"
+      ? "http://localhost:3001/api/flight-agent"
+      : "https://flypointwise-agent-backend-production.up.railway.app/api/flight-agent";
+
 
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
       e.preventDefault();
