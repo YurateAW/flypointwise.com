@@ -27,11 +27,16 @@
   </div>
 
   <script>
-    const BACKEND_URL = 'https://flypointwise-agent-backend.up.railway.app/api/flight-agent';
+    // ✅ Automatically switch between local and production backend
+    const BACKEND_URL =
+      window.location.hostname === "localhost"
+        ? "http://localhost:3001/api/flight-agent"
+        : "https://flypointwise-agent-backend.up.railway.app/api/flight-agent";
 
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Collect user input
       const query = {
         from: document.getElementById('from').value.toUpperCase(),
         to: document.getElementById('to').value.toUpperCase(),
@@ -45,6 +50,7 @@
       resultsDiv.innerHTML = '<p>🔍 Searching flights...</p>';
 
       try {
+        // Send POST request to backend
         const response = await fetch(BACKEND_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -58,15 +64,19 @@
 
         const data = await response.json();
 
+        // Handle empty results
         if (!Array.isArray(data) || data.length === 0) {
           resultsDiv.innerHTML = '<p>No flights found or an error occurred.</p>';
           return;
         }
 
-        // Render flight cards
-        resultsDiv.innerHTML = data.map(f => `
+        // Render cards for each flight
+        resultsDiv.innerHTML = data.map((f, i) => `
           <div class="card">
-            <h2>${f.airline || "Unknown Airline"}</h2>
+            <div class="header">
+              <h2>${f.airline || "Unknown Airline"}</h2>
+              <span class="rank-badge">#${i + 1}</span>
+            </div>
             <p><strong>Route:</strong> ${f.route || "N/A"}</p>
             <p><strong>Cabin:</strong> ${f.cabin || "N/A"}</p>
             <p><strong>Cash Price:</strong> €${f.cash_price || f.price || "?"}</p>
@@ -74,6 +84,7 @@
             ${f.best_program ? `
               <p><strong>Best Program:</strong> ${f.best_program.name} (${f.best_program.ratio})</p>
               <p><strong>Required Points:</strong> ${f.best_program.required_points?.toLocaleString() || "?"} + €${f.best_program.taxes || 0} taxes</p>
+              <p><strong>Transfer Time:</strong> ${f.best_program.transfer_time_days || "N/A"}</p>
             ` : `<p><em>No loyalty program comparison available</em></p>`}
 
             <p><em>${f.recommendation || ""}</em></p>
@@ -86,5 +97,88 @@
       }
     });
   </script>
+
+  <style>
+    /* Basic Styling */
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    input, select, button {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #0056cc;
+    }
+
+    .results {
+      margin-top: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #eaeaea;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .rank-badge {
+      background: #007bff;
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      float: right;
+    }
+
+    .card p {
+      margin: 0.3rem 0;
+      line-height: 1.3;
+    }
+  </style>
 </body>
 </html>
