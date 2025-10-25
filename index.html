@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flight Deal Optimizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-4">Flight Deal Optimizer ✈️</h1>
+    <form id="searchForm" class="space-y-3">
+      <input type="text" placeholder="From (e.g. HAM)" id="from" class="border p-2 w-full rounded">
+      <input type="text" placeholder="To (e.g. TYO)" id="to" class="border p-2 w-full rounded">
+      <input type="date" id="departure" class="border p-2 w-full rounded">
+      <input type="date" id="return" class="border p-2 w-full rounded">
+      <input type="number" id="passengers" min="1" value="1" class="border p-2 w-full rounded">
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Search</button>
+    </form>
+    <div id="results" class="mt-6"></div>
+  </div>
+
+  <script>
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = {
+        from: from.value,
+        to: to.value,
+        departure: departure.value,
+        return: return.value,
+        passengers: passengers.value
+      };
+      document.getElementById('results').innerHTML = '<p>Searching...</p>';
+      
+      // Send query to your backend agent endpoint
+      const response = await fetch('/api/flight-agent', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(query)
+      });
+      const data = await response.json();
+      document.getElementById('results').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    });
+  </script>
+</body>
+</html>
