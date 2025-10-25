@@ -1,51 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>FlyPointWise Agent</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>FlyPointWise Flight Optimizer ✈️</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-<h1>FlyPointWise Flight Optimizer ✈️</h1>
-<form id="searchForm">
-  <input id="from" placeholder="From (IATA)" required>
-  <input id="to" placeholder="To (IATA)" required>
-  <input id="departure" type="date" required>
-  <input id="return" type="date">
-  <input id="passengers" type="number" value="1" min="1">
-  <select id="travelClass">
-    <option value="ECONOMY">Economy</option>
-    <option value="BUSINESS">Business</option>
-    <option value="BOTH">Compare Both</option>
-  </select>
-  <button type="submit">Search</button>
-</form>
-<div id="results" class="results"></div>
-</div>
-<script>
-document.getElementById('searchForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const query = { from: from.value, to: to.value, departure: departure.value, return: return.value, passengers: passengers.value, travelClass: travelClass.value };
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML = '<p>Searching...</p>';
-  const response = await fetch('https://flypointwise-production.up.railway.app/api/flight-agent', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(query)
-  });
-  const data = await response.json();
-  if (!Array.isArray(data)) return resultsDiv.innerHTML = '<p>No results.</p>';
-  resultsDiv.innerHTML = data.map(f => \`
-    <div class="card">
-      <h2>\${f.airline}</h2>
-      <p><strong>Route:</strong> \${f.route}</p>
-      <p><strong>Cabin:</strong> \${f.cabin}</p>
-      <p><strong>Cash Price:</strong> €\${f.cash_price}</p>
-      <p><strong>Best Program:</strong> \${f.best_program.name} (\${f.best_program.ratio})</p>
-      <p><strong>Required Points:</strong> \${f.best_program.required_points.toLocaleString()} + €\${f.best_program.taxes} taxes</p>
-      <p><em>\${f.recommendation}</em></p>
-    </div>\`).join('');
-});
-</script>
+  <div class="container">
+    <h1>FlyPointWise Flight Optimizer ✈️</h1>
+
+    <form id="searchForm">
+      <input id="from" placeholder="From (IATA)" required>
+      <input id="to" placeholder="To (IATA)" required>
+      <input id="departure" type="date" required>
+      <input id="return" type="date">
+      <input id="passengers" type="number" value="1" min="1">
+      <select id="travelClass">
+        <option value="ECONOMY">Economy</option>
+        <option value="BUSINESS">Business</option>
+        <option value="BOTH">Compare Both</option>
+      </select>
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="results" class="results"></div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'https://flypointwise-agent-backend.up.railway.app/api/flight-agent';
+
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const query = {
+        from: document.getElementById('from').value.toUpperCase(),
+        to: document.getElementById('to').value.toUpperCase(),
+        departure: document.getElementById('departure').value,
+        return: document.getElementById('return').value,
+        passengers: document.getElementById('passengers').value,
+        travelClass: document.getElementById('travelClass').value
+      };
+
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<p>🔍 Searching flights...</p>';
+
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(query)
+        });
+
+        if (!response.ok) {
+          resultsDiv.innerHTML = `<p>❌ Error: ${response.statusText}</p>`;
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          resultsDiv.innerHTML = '<p>No flights found or an error occurred.</p>';
+          return;
+        }
+
+        // Render flight cards
+        resultsDiv.innerHTML = data.map(f => `
+          <div class="card">
+            <h2>${f.airline || "Unknown Airline"}</h2>
+            <p><strong>Route:</strong> ${f.route || "N/A"}</p>
+            <p><strong>Cabin:</strong> ${f.cabin || "N/A"}</p>
+            <p><strong>Cash Price:</strong> €${f.cash_price || f.price || "?"}</p>
+
+            ${f.best_program ? `
+              <p><strong>Best Program:</strong> ${f.best_program.name} (${f.best_program.ratio})</p>
+              <p><strong>Required Points:</strong> ${f.best_program.required_points?.toLocaleString() || "?"} + €${f.best_program.taxes || 0} taxes</p>
+            ` : `<p><em>No loyalty program comparison available</em></p>`}
+
+            <p><em>${f.recommendation || ""}</em></p>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        console.error('❌ Fetch error:', err);
+        resultsDiv.innerHTML = '<p>Server error. Please try again later.</p>';
+      }
+    });
+  </script>
 </body>
 </html>
